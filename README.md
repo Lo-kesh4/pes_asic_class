@@ -12,7 +12,7 @@ sudo apt upgrade
 ## Install the Prerequisites(for ubuntu)
 ```
 chmod +x run.sh
-./run_ubuntu.sh
+./run.sh
 ```
 The installed contents will be available at ~/riscv_toolchain
 
