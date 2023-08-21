@@ -34,9 +34,56 @@ ____System Software____
 
 # COURSE 
 <details>
-<summary>DAY 1</summary>
+<summary>DAY 1: Introduction to RISCV ISA and GNU Compiler Toolchain</summary>
 <br>
 
+## Introduction to Risc-v Basic Keywords
+- **Instruction Set Architecture(ISA)**
+  - An Instruction Set Architecture (ISA) refers to the set of instructions that a computer's central processing unit (CPU) can understand and execute. It defines the interface between software and hardware, specifying the operations that a CPU can perform, the data types it can manipulate, and the memory addressing modes it supports.
+
+- **Risc-V ISA**
+  - Risc-V ISA is an open-source ISA that has simpler and fixed length instructions that allows us to create custom processors for specific needs without being tied to proprietary architectures
+ 
+- **Tools Used for the flow**
+  - As we are aware of the flow, we will be using Risc-v ISA ALP and the RTL used will be picorv32a (We will be using rv64i during initial stages)
+
+# Goal : Any High level Program that is written should be able to get executed in our CHIP
+
+### List of well-known extensions present in Risc-V ISA
+
+``` rv32i``` ``` rv64i``` ```rv32imc``` ```rv64imc``` ```rv32imafdc``` ```rv64imafdc``` ```rv32imcb``` ```rv64imcb``` ```rv32imc_sv32``` ```rv64gcv```
+
+### Extensions and their Applications
+
+- **I (Integer)** :The I set includes the base integer instruction set for RISC-V. It provides fundamental integer arithmetic and logical operations, data movement, and control flow instructions.
+  - ADD, SUB, AND, OR, XOR, ADDI, SLTI, JAL, BEQ, LW
+
+- **M (Multiply and Divide)** : The M set adds integer multiplication and division instructions to the base integer set. These instructions are particularly useful for arithmetic-heavy computations.
+  - MUL, MULH, DIV, REM
+  
+- **A (Atomic)** : The A set introduces atomic memory access instructions. These instructions enable multiple operations on memory locations to be performed atomically, ensuring that other processors or threads cannot observe intermediate states.
+  - LR (Load-Reserved), SC (Store-Conditional), AMO (Atomic Memory Operation)
+  
+- **F (Single-Precision Floating-Point)**: The F set adds single-precision floating-point instructions. These instructions enable arithmetic operations on 32-bit floating-point numbers.
+  - FADD.S, FSUB.S, FMUL.S, FDIV.S, FCVT.W.S, FCVT.S.W
+
+- **D (Double-Precision Floating-Point)** : The D set includes double-precision floating-point instructions. These instructions allow arithmetic operations on 64-bit floating-point numbers.
+  - FADD.D, FSUB.D, FMUL.D, FDIV.D, FCVT.W.D, FCVT.D.W
+
+- **C (Compressed)** : The C set introduces a compressed instruction format that reduces the size of code. Compressed instructions maintain the same functionality as their non-compressed counterparts but use shorter encodings.
+  - C.ADDI4SPN, C.LWSP, C.ADDI, C.SW, C.JALR, C.BEQZ
+
+- **G (Atomic and Lock-Free Operations)** : The G set, also known as the "GAS Set," is an alternative to the A set. It focuses on providing atomic and lock-free instructions to simplify hardware implementation.
+  - LRV (Load-Reserved Variant), SCV (Store-Conditional Variant), AMO (Atomic Memory Operation Variants)
+
+- **V (Vector)** :The V set adds vector instructions to the ISA, enabling Single Instruction, Multiple Data (SIMD) operations. These instructions allow efficient parallel processing of data elements in vectors.
+  - VADD, VMUL, VFMADD, VLW, VSW
+
+- **S (Supervisor)** : The S set, often used in privileged modes, includes instructions for managing and interacting with the supervisor-level operations of the system, such as handling exceptions and interrupts.
+  - ECALL, EBREAK, SRET, MRET, WFI
+
+- **B (Bit Manipulation)** : The B set introduces instructions for bit manipulation operations, allowing efficient manipulation of individual bits in registers and memory.
+  - ANDI, ORI, XORI, SLLI, SRLI, SRAI
 
 ## 1. Create a simple C program That calculates sum from 1 to N -> sum1toN.c
 
@@ -102,3 +149,85 @@ spike -d pk 1toN.o
 highlow.c
 ```
 ![Screenshot from 2023-08-20 01-27-44](https://github.com/Lo-kesh4/pes_asic_class/assets/131575546/04c0a92e-37cc-4818-9eda-9686718106e5)
+
+</details>
+<details>
+<summary>DAY 2 : Introduction to ABI and Basic Verification Flow </summary>
+<br>
+
+# Labwork using ABI Function Calls
+## Algorithm for C Program using ASM
+- Incorporating assembly language code into a C program can be done using inline assembly or by linking separate assembly files with your C code.
+- When you call an assembly function from your C code, the C calling convention is followed, including pushing arguments onto the stack or passing them in registers as required.
+- The program executes the assembly function, following the assembly instructions you've provided.
+
+## Review ASM Function Calls
+- We wrote C code in one file and your assembly code in a separate file.
+- In the assembly file, we declared assembly functions with appropriate signatures that match the calling conventions of your platform.
+
+**C Program**
+`custom1to9.c`
+  ``` c
+  #include <stdio.h>
+  
+  extern int load(int x, int y);
+  
+  int main()
+  {
+    int result = 0;
+    int count = 9;
+    result = load(0x0, count+1);
+    printf("Sum of numbers from 1 to 9 is %d\n", result);
+  }
+```
+**Asseembly File**
+`load.s`
+``` s
+.section .text
+.global load
+.type load, @function
+
+load:
+
+add a4, a0, zero
+add a2, a0, a1
+add a3, a0, zero
+
+loop:
+
+add a4, a3, a4
+addi a3, a3, 1
+blt a3, a2, loop
+add a0, a4, zero
+ret
+```
+## Simulate C Program using Function Call
+**Compilation:** To compile C code and Asseembly file use the command
+
+`riscv64-unknown-elf-gcc -O1 -mabi=lp64 -march=rv64i -o custom1to9.o custom1to9.c load.s` 
+
+this would generate object file `custom1to9.o`.
+
+**Execution:** To execute the object file run the command 
+
+`spike pk custom1to9.o`
+
+![Screenshot from 2023-08-21 23-30-51](https://github.com/Lo-kesh4/pes_asic_class/assets/131575546/5ff4eef3-ff03-46aa-bb5e-d05397d53051)
+
+## Lab to Run C-Program on RISCV-CPU
+
+`git clone https://github.com/kunalg123/riscv_workshop_collaterals.git`
+
+`cd riscv_workshop_collaterals`
+
+`ls -ltr`
+
+`cd labs`
+
+`ls -ltr`
+
+`chmod 777 rv32im.sh`
+
+`./rv32im.sh`
+
+![Screenshot from 2023-08-21 23-35-55](https://github.com/Lo-kesh4/pes_asic_class/assets/131575546/ef5ba018-c420-40d5-8a93-45ca866051cc)
