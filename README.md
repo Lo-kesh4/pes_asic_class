@@ -1045,6 +1045,7 @@ It gives a report of what cells are used and the number of input and output sign
 <img width="923" alt="image" src="https://github.com/Veda1809/pes_asic_class/assets/142098395/78af2250-6ee8-4d94-b91b-138cb2877b1e">
 
 </details>
+</details>
 <details>
 <summary>DAY 6:GLS Synthesis-Simulation Mismatch and Blocking Non-blocking Statements </summary>
 
